@@ -1,0 +1,43 @@
+#!/bin/bash
+# Global Variables:
+GUEST_RAM=$(free -m | grep -oP '\d+' | head -n 1)
+GUEST_CPUS=$(nproc --all)
+
+# Set variables for the VM:
+
+printf "Name of the VM: "
+read VM
+printf "\n"
+printf "Path to the ISO installer of the SO: "
+read ISO
+printf "\n"
+printf "Path to the Disk Image to install/boot the VM: "
+read DISK
+printf "\n"
+if [ ! -f $DISK ]; then
+	printf "Insert a new disk size: "
+	read DISK_SIZE
+	printf "\n"
+	printf "[INFO] Creating a new disk...\n"
+	if ! qemu-img create $DISK $DISK_SIZE; then
+		printf "ERROR!\n"
+		return 1
+	fi
+	printf "Complete!\n"
+fi
+printf "How much RAM will you use? (512MB~${GUEST_RAM}MB) "
+read RAM
+printf "\n"
+printf "How many cores will you use? (2~${GUEST_CPUS}) "
+read CORES
+printf "\n"
+printf "Enable KVM? [Y/n]: "
+read $KVM
+printf "\n"
+
+# Spawns a new VM with QEMU:
+
+if [ "${KVM}" == "N" || "${KVM}" == "n" ]; then
+	qemu-system-x86_64 -m $RAM -smp $CORES -name $NAME -boot $DISK -cdrom $ISO
+fi
+qemu-system-x86_64 -m $RAM -smp $CORES --enable-kvm -name $NAME -boot $DISK -cdrom $ISO
